@@ -10,15 +10,15 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from rest.broker.kafka import send_kafka_message
 from rest.database_connector import get_async_session
 from rest.models.database import data
-from rest.schemas.generated.application import Application
+from rest.schemas.generated.car import Car
 from rest.schemas.working.state import State
     
 # don't forget to add this router to your app!!
-router = APIRouter(prefix="/application", tags=["Application"])
+router = APIRouter(prefix="/car", tags=["Car"])
 
 
 @router.post('/')
-async def create_document(document: Application, session: AsyncSession = Depends(get_async_session)):
+async def create_document(document: Car, session: AsyncSession = Depends(get_async_session)):
     document_dict = document.dict()
     new_d = {**document_dict, "state": State.NEW, "json": document_dict}
     del new_d["configuration"]
@@ -37,7 +37,7 @@ async def change_specification(json_id: UUID, change_dict: Dict[Any, Any], sessi
     changed_spec = received_json["configuration"]["specification"] | change_dict
     received_json["configuration"]["specification"] = changed_spec
     try:
-        Application.model_validate(received_json)
+        Car.model_validate(received_json)
     except ValidationError:
         raise HTTPException(status_code=400, detail="Types mismatch")
     stmt = update(data).where(data.c.id == json_id).values(json=received_json)
@@ -55,7 +55,7 @@ async def change_settings(json_id: UUID, change_dict: Dict[Any, Any], session: A
     changed_settings = received_json["configuration"]["settings"] | change_dict
     received_json["configuration"]["settings"] = changed_settings
     try:
-        Application.model_validate(received_json)
+        Car.model_validate(received_json)
     except ValidationError:
         raise HTTPException(status_code=400, detail="Types mismatch")
     stmt = update(data).where(data.c.id == json_id).values(json=received_json)
@@ -84,11 +84,11 @@ async def delete_document(json_id: UUID, session: AsyncSession = Depends(get_asy
     
 
 @router.get("/{json_id}")
-async def get_document(json_id: UUID, session: AsyncSession = Depends(get_async_session)) -> Application:
+async def get_document(json_id: UUID, session: AsyncSession = Depends(get_async_session)) -> Car:
     query = select(data.c.json).where(data.c.id == json_id)
     json_data = await session.execute(query)
     received_json = json_data.one()[0]
-    return Application(**received_json)
+    return Car(**received_json)
     
 
 @router.get("/{json_id}/state")

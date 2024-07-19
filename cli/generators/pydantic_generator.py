@@ -53,7 +53,7 @@ def generate_pydantic_model(schema_path: str, out_dir: str) -> None:
         schema = json.load(file)
 
     imports = ("from typing import " + ", ".join(["Dict", "Any"]) + '\n' +
-               "from schemas import " + ", ".join(["BaseModel", "Field", "ConfigDict"]) +
+               "from pydantic import " + ", ".join(["BaseModel", "Field", "ConfigDict"]) +
                '\n\n\n')
 
     model_name = schema["properties"]["kind"]["const"].capitalize()

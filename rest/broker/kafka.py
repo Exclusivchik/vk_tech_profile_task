@@ -1,5 +1,7 @@
 import json
+
 from aiokafka import AIOKafkaProducer
+import socket
 
 kafka_producer = AIOKafkaProducer(
     bootstrap_servers='localhost:9092',
@@ -7,13 +9,14 @@ kafka_producer = AIOKafkaProducer(
 )
 
 
-async def init_kafka_producer():
-    await kafka_producer.start()
-
-
-async def close_kafka_producer():
-    await kafka_producer.stop()
+def check_kafka() -> bool:
+    port = 9092
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        return s.connect_ex(('localhost', port)) == 0
 
 
 async def send_kafka_message(topic: str, message: dict):
-    await kafka_producer.send_and_wait(topic, message)
+    if check_kafka():
+        await kafka_producer.send(topic, message)
+    else:
+        print("Kafka is not available ")
